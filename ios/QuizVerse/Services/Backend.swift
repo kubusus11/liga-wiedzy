@@ -45,6 +45,8 @@ struct BackendError: LocalizedError, Equatable {
 }
 
 /// Wspólny interfejs backendu: Supabase (produkcja) lub lokalny tryb demonstracyjny.
+/// Izolowany do MainActor – stan trybu demo i sesja Supabase nie są współdzielone między wątkami.
+@MainActor
 protocol GameBackend: AnyObject {
     var isDemo: Bool { get }
     var isSignedIn: Bool { get }

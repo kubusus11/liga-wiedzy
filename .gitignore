@@ -7,4 +7,4 @@ build/
 supabase/.temp/
 supabase/.branches/
 __pycache__/
-ios/QuizVerse/Config/Secrets.xcconfig
+ios/Config/Secrets.xcconfig
