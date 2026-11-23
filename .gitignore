@@ -1,0 +1,10 @@
+.DS_Store
+xcuserdata/
+DerivedData/
+*.xcuserstate
+build/
+.env
+supabase/.temp/
+supabase/.branches/
+__pycache__/
+ios/QuizVerse/Config/Secrets.xcconfig
