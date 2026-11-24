@@ -1,0 +1,23 @@
+# Konfiguracja Supabase CLI (supabase start / supabase functions deploy)
+project_id = "quizverse"
+
+[api]
+schemas = ["public"]
+
+[auth]
+site_url = "quizverse://auth-callback"
+additional_redirect_urls = ["quizverse://auth-callback"]
+minimum_password_length = 8
+
+[functions.generate-questions]
+verify_jwt = true
+
+[functions.ai-mentor]
+verify_jwt = true
+
+# Funkcje harmonogramu – autoryzacja nagłówkiem x-cron-secret
+[functions.settle-week]
+verify_jwt = false
+
+[functions.send-push]
+verify_jwt = false

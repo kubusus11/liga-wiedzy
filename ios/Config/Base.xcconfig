@@ -1,0 +1,8 @@
+// Wspólna konfiguracja QUIZVERSE. Wartości produkcyjne wpisz w Config/Secrets.xcconfig
+// (plik jest w .gitignore – skopiuj Secrets.example.xcconfig). Brak wartości = tryb demonstracyjny.
+
+SUPABASE_URL =
+SUPABASE_ANON_KEY =
+QV_BUNDLE_ID = app.quizverse.ios
+
+#include? "Secrets.xcconfig"
