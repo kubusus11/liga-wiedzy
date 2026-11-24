@@ -59,7 +59,7 @@ final class DemoBackend: GameBackend {
         let currentWeek = weekKey
         if state.weekStart.isEmpty {
             state.weekStart = currentWeek
-            state.rivals = Self.makeRivals(league: state.leagueId, seed: UInt64(abs(currentWeek.hashValue)))
+            state.rivals = Self.makeRivals(league: state.leagueId, seed: SeededRandom.stableHash(currentWeek))
         }
         while state.weekStart != currentWeek {
             guard let ws = QVDate.parse(state.weekStart) else { state.weekStart = currentWeek; break }
@@ -67,7 +67,7 @@ final class DemoBackend: GameBackend {
             let next = ws.addingTimeInterval(7 * 86400 + 3600) // +1 h na zmianę czasu
             state.weekStart = QVDate.dayString(Self.weekStart(next))
             if state.weekStart > currentWeek { state.weekStart = currentWeek }
-            state.rivals = Self.makeRivals(league: state.leagueId, seed: UInt64(abs(state.weekStart.hashValue)))
+            state.rivals = Self.makeRivals(league: state.leagueId, seed: SeededRandom.stableHash(state.weekStart))
             state.myWeekLP = 0
             state.joinedWeek = false
         }
@@ -145,11 +145,11 @@ final class DemoBackend: GameBackend {
         let activity = [1.0, 1.5, 2.2, 3.0, 4.0][max(1, min(5, league)) - 1]
         return names.enumerated().map { i, n in
             DemoRival(id: "sim-\(i)", name: n,
-                      avatar: Rules.avatars[Int(rng.next() * Double(Rules.avatars.count)) % Rules.avatars.count],
-                      color: Rules.avatarColors[Int(rng.next() * Double(Rules.avatarColors.count)) % Rules.avatarColors.count],
-                      level: 1 + Int(rng.next() * Double(10 * league + 10)),
-                      ratePerHour: activity * (0.15 + rng.next() * 2.2),
-                      startDelayHours: rng.next() * 60)
+                      avatar: Rules.avatars[Int(rng.unit() * Double(Rules.avatars.count)) % Rules.avatars.count],
+                      color: Rules.avatarColors[Int(rng.unit() * Double(Rules.avatarColors.count)) % Rules.avatarColors.count],
+                      level: 1 + Int(rng.unit() * Double(10 * league + 10)),
+                      ratePerHour: activity * (0.15 + rng.unit() * 2.2),
+                      startDelayHours: rng.unit() * 60)
         }
     }
 
@@ -230,12 +230,12 @@ final class DemoBackend: GameBackend {
     }
 
     private func dailyQuestionIds(day: String) -> [String] {
-        var rng = SeededRandom(seed: UInt64(abs(day.hashValue)))
+        var rng = SeededRandom(stableSeed: "daily:" + day)
         let byCat = Dictionary(grouping: content.questions.filter { $0.kind == "standard" }, by: \.categoryId)
         var picks: [ContentBundle.QuestionDTO] = []
         for cat in byCat.keys.sorted().shuffled(using: &rng).prefix(10) {
             let qs = byCat[cat]!.sorted { $0.id < $1.id }
-            picks.append(qs[Int(rng.next() * Double(qs.count)) % qs.count])
+            picks.append(qs[Int(rng.unit() * Double(qs.count)) % qs.count])
         }
         return picks.sorted { $0.difficulty < $1.difficulty }.map(\.id)
     }
@@ -582,7 +582,7 @@ final class DemoBackend: GameBackend {
         let pool = content.cards.filter { $0.categoryId == cat }
         let candidates = (pool.filter { $0.rarity == rarity }.isEmpty ? pool : pool.filter { $0.rarity == rarity })
         let fallback = candidates.isEmpty ? content.cards : candidates
-        guard let c = fallback.sorted(by: { (state.cards[$0.id] != nil ? 1 : 0, Double.random(in: 0..<1)) < (state.cards[$1.id] != nil ? 1 : 0, Double.random(in: 0..<1)) }).first
+        guard let c = fallback.shuffled().sorted(by: { (state.cards[$0.id] != nil ? 1 : 0) < (state.cards[$1.id] != nil ? 1 : 0) }).first
         else { return nil }
         let copies = (state.cards[c.id] ?? 0) + 1
         state.cards[c.id] = copies

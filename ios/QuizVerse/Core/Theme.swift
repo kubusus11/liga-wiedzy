@@ -90,11 +90,11 @@ struct StarfieldBackground: View {
                 let t = timeline.date.timeIntervalSinceReferenceDate
                 var rng = SeededRandom(seed: 42)
                 for _ in 0..<110 {
-                    let x = rng.next() * size.width
-                    let y = rng.next() * size.height
-                    let r = 0.4 + rng.next() * 1.4
-                    let phase = rng.next() * .pi * 2
-                    let twinkle = reduceMotion ? 0.7 : 0.45 + 0.55 * (0.5 + 0.5 * sin(t * (0.6 + rng.next()) + phase))
+                    let x = rng.unit() * size.width
+                    let y = rng.unit() * size.height
+                    let r = 0.4 + rng.unit() * 1.4
+                    let phase = rng.unit() * .pi * 2
+                    let twinkle = reduceMotion ? 0.7 : 0.45 + 0.55 * (0.5 + 0.5 * sin(t * (0.6 + rng.unit()) + phase))
                     ctx.fill(Path(ellipseIn: CGRect(x: x, y: y, width: r, height: r)),
                              with: .color(.white.opacity(twinkle * 0.8 * intensity)))
                 }
@@ -114,13 +114,30 @@ struct StarfieldBackground: View {
     }
 }
 
-struct SeededRandom {
+/// Deterministyczny generator (LCG) – ten sam seed daje te same wyniki przy każdym uruchomieniu.
+struct SeededRandom: RandomNumberGenerator {
     private var state: UInt64
     init(seed: UInt64) { state = seed }
-    mutating func next() -> Double {
-        state = state &* 6364136223846793005 &+ 1442695040888963407
-        return Double((state >> 33) % 1_000_000) / 1_000_000
+
+    /// Seed stabilny między uruchomieniami (String.hashValue jest losowany przy każdym starcie aplikacji).
+    init(stableSeed text: String) { state = Self.stableHash(text) }
+
+    static func stableHash(_ text: String) -> UInt64 {
+        var h: UInt64 = 0xcbf29ce484222325 // FNV-1a
+        for b in text.utf8 { h = (h ^ UInt64(b)) &* 0x100000001b3 }
+        return h
     }
+
+    mutating func next() -> UInt64 {
+        state = state &* 6364136223846793005 &+ 1442695040888963407
+        var z = state
+        z = (z ^ (z >> 30)) &* 0xbf58476d1ce4e5b9
+        z = (z ^ (z >> 27)) &* 0x94d049bb133111eb
+        return z ^ (z >> 31)
+    }
+
+    /// Liczba z przedziału [0, 1).
+    mutating func unit() -> Double { Double(next() >> 11) / Double(1 << 53) }
 }
 
 // MARK: - Karty i przyciski

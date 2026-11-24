@@ -152,3 +152,15 @@ final class RulesTests: XCTestCase {
         XCTAssertEqual(Fmt.plural(22, "pytanie", "pytania", "pytań"), "22 pytania")
     }
 }
+
+final class SeededRandomTests: XCTestCase {
+    func testStableAcrossRuns() {
+        var a = SeededRandom(stableSeed: "daily:2026-11-24")
+        var b = SeededRandom(stableSeed: "daily:2026-11-24")
+        XCTAssertEqual((0..<5).map { _ in a.next() }, (0..<5).map { _ in b.next() })
+        XCTAssertEqual(SeededRandom.stableHash("abc"), 0xe71fa2190541574b) // FNV-1a 64
+        var r = SeededRandom(seed: 1)
+        for _ in 0..<1000 { let u = r.unit(); XCTAssert(u >= 0 && u < 1) }
+        XCTAssertEqual([1, 2, 3, 4, 5].shuffled(using: &a), [1, 2, 3, 4, 5].shuffled(using: &b))
+    }
+}
